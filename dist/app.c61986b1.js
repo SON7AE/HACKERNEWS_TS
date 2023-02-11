@@ -121,6 +121,13 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 "use strict";
 
 // ----------------------------------------------------------------------------------------------------
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
@@ -128,7 +135,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 var AJAX = new XMLHttpRequest();
-var CONTAINER = document.getElementById('root');
+var container = document.getElementById('root');
 var NEWS_URL = 'https://api.hnpwa.com/v0/news/1.json';
 var CONTENT_URL = 'https://api.hnpwa.com/v0/item/@id.json';
 var store = {
@@ -188,62 +195,128 @@ var NewsDetailApi = /*#__PURE__*/function () {
 applyApiMixins(NewsFeedApi, [Api]);
 applyApiMixins(NewsDetailApi, [Api]);
 // ----------------------------------------------------------------------------------------------------
-function makeFeeds(feeds) {
-  for (var i = 0; i < feeds.length; i++) {
-    feeds[i].read = false;
-  }
-  return feeds;
-}
-function updateView(html) {
-  if (CONTAINER !== null) {
-    CONTAINER.innerHTML = html;
-  } else {
-    console.error('최상위 컨테이너가 없어 UI를 진행하지 못했습니다.');
-  }
-}
-function newsFeed() {
-  // 메인 페이지
-  var api = new NewsFeedApi();
-  var newsFeed = store.feeds;
-  var NEWSLIST = [];
-  var template = "\n        <div class=\"bg-gray-600 min-h-screen\">\n            <div class=\"bg-white text-xl\">\n                <div class=\"mx-auto px-4\">\n                    <div class=\"flex justify-between items-center py-6\">\n                        <div class=\"flex justify-start\"> \n                            <h1 class=\"font-extrabold\">HACKER NEWS</h1>\n                        </div>\n                        <div class=\"items-center justify-end\">\n                            <a href=\"#/page/{{__prev_page__}}\" class=\"text-gray-500\">\n                                Previous\n                            </a>\n                            <a href=\"#/page/{{__next_page__}}\" class=\"text-gray-500 ml-4\">\n                                Next\n                            </a>\n                        </div>    \n                    </div>\n                </div>\n            </div>            \n            <div class=\"p-4 text-2xl text-gray-700\">\n                {{__news_feed__}}\n            </div>\n        </div>\n    ";
-  // getData의 리턴 값이 2개이므로 제네릭을 사용하자.
-  if (newsFeed.length === 0) {
-    newsFeed = store.feeds = makeFeeds(api.getData());
-  }
-  for (var i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
-    NEWSLIST.push("\n            <div class=\"p-6 ".concat(newsFeed[i].read ? 'bg-red-200' : 'bg-white', " mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100\">\n                <div class=\"flex\">\n                    <div class=\"flex-auto\">\n                        <a href=\"#/show/").concat(newsFeed[i].id, "\">\n                            ").concat(newsFeed[i].title, "\n                        </a>\n                    </div>\n                    <div class=\"text-center text-sm\">\n                        <div class=\"w-10 text-white bg-green-300 rounded-lg px-0 py-2\">\n                            (").concat(newsFeed[i].comments_count, ")\n                        </div>\n                    </div>\n                </div>\n                <div class=\"flex mt-3\">\n                    <div class=\"grid grid-cols-3 text-sm text-gray-500\">\n                        <div>\n                            <i class=\"fas fa-user mr-1\"></i>").concat(newsFeed[i].user, "\n                        </div>\n                        <div>\n                            <i class=\"fas fa-heart mr-1\"></i>").concat(newsFeed[i].points, "\n                        </div>    \n                        <div>\n                            <i class=\"fas fa-clock mr-1\"></i>").concat(newsFeed[i].time_ago, "\n                        </div>        \n                    </div>\n                </div>\n            </div>\n        "));
-  }
-  template = template.replace('{{__news_feed__}}', NEWSLIST.join(''));
-  template = template.replace('{{__prev_page__}}', String(store.currentPage > 1 ? store.currentPage - 1 : 1));
-  template = template.replace('{{__next_page__}}', String(store.currentPage + 1));
-  updateView(template);
-}
-function newsDetail() {
-  var id = location.hash.substring(7); // 내가 쓰고 싶은 위치 값을 지정해주면 된다. 그 이후의 나머지 문자열들만 반환한다.
-  var api = new NewsDetailApi();
-  var NEWSCONTENT = api.getData(id);
-  var template = "\n        <div class=\"bg-gray-600 min-h-screen pb-8\">\n            <div class=\"bg-white text-xl\">\n                <div class=\"mx-auto px-4\">\n                    <div class=\"flex justify-between items-center py-6\">\n                        <div class=\"flex justify-start\">\n                            <h1 class=\"font-extrabold\">\n                                HACKER NEWS\n                            </h1>\n                        </div>\n                        <div class=\"items-center justify-end\">\n                            <a href=\"#/page/".concat(store.currentPage, "\" class=\"text-gray-500\">\n                                <i class=\"fa fa-times\"></i>\n                            </a>\n                        </div>\n                    </div>\n                </div>\n            </div>\n            <div class=\"h-full border rounded-xl bg-white m-6 p-4\">\n                <h2>\n                    ").concat(NEWSCONTENT.title, "\n                </h2>\n                <div class=\"text-gray-400 h-20\">\n                    ").concat(NEWSCONTENT.content, "\n                </div>\n                {{__comments__}}\n            </div>\n        </div>\n    ");
-  for (var i = 0; i < store.feeds.length; i++) {
-    if (store.feeds[i].id === Number(id)) {
-      store.feeds[i].read = true;
-      break;
+var View = /*#__PURE__*/function () {
+  function View(containerId, template) {
+    _classCallCheck(this, View);
+    var containerElement = document.getElementById(containerId);
+    if (!containerElement) {
+      throw '최상위 컨테이너가 없어 UI를 진행하지 못합니다.';
     }
+    this.container = containerElement;
+    this.template = template;
+    this.htmlList = [];
   }
-  updateView(template.replace('{{__comments__}}', makeComment(NEWSCONTENT.comments)));
-}
-function makeComment(comments) {
-  var commentString = [];
-  for (var i = 0; i < comments.length; i++) {
-    var comment = comments[i];
-    commentString.push("\n            <div style=\"padding-left: ".concat(comment.level * 40, "px\" class=\"mt-4\">\n                <div class=\"text-gray-400\">\n                    <i class=\"fa fa-sort-up mr-2\"></i>\n                    <strong>").concat(comment.user, "</strong> ").concat(comment.time_ago, "\n                </div>\n                <p class=\"text-gray-700\">\n                    ").concat(comment.content, "\n                </p>\n            </div>\n        "));
-    // 재귀 호출
-    if (comment.comments.length > 0) {
-      commentString.push(makeComment(comment.comments));
+  _createClass(View, [{
+    key: "updateView",
+    value: function updateView() {
+      this.container.innerHTML = this.template;
     }
+  }, {
+    key: "addHtml",
+    value: function addHtml(htmlString) {
+      this.htmlList.push(htmlString);
+    }
+  }, {
+    key: "getHtml",
+    value: function getHtml() {
+      return this.htmlList.join('');
+    }
+  }, {
+    key: "setTemplateData",
+    value: function setTemplateData(key, value) {
+      this.template = this.template.replace("{{__".concat(key, "__}}"), value);
+    }
+  }]);
+  return View;
+}();
+var NewsFeedView = /*#__PURE__*/function (_View) {
+  _inherits(NewsFeedView, _View);
+  var _super = _createSuper(NewsFeedView);
+  function NewsFeedView(containerId) {
+    var _this;
+    _classCallCheck(this, NewsFeedView);
+    // 메인 페이지
+    var template = "\n            <div class=\"bg-gray-600 min-h-screen\">\n                <div class=\"bg-white text-xl\">\n                    <div class=\"mx-auto px-4\">\n                        <div class=\"flex justify-between items-center py-6\">\n                            <div class=\"flex justify-start\">\n                                <h1 class=\"font-extrabold\">HACKER NEWS</h1>\n                            </div>\n                            <div class=\"items-center justify-end\">\n                                <a href=\"#/page/{{__prev_page__}}\" class=\"text-gray-500\">\n                                    Previous\n                                </a>\n                                <a href=\"#/page/{{__next_page__}}\" class=\"text-gray-500 ml-4\">\n                                    Next\n                                </a>\n                            </div>\n                        </div>\n                    </div>\n                </div>\n                <div class=\"p-4 text-2xl text-gray-700\">\n                    {{__news_feed__}}\n                </div>\n            </div>\n        ";
+    _this = _super.call(this, containerId, template);
+    _this.api = new NewsFeedApi(NEWS_URL);
+    _this.feeds = store.feeds;
+    if (_this.feeds.length === 0) {
+      _this.feeds = store.feeds = _this.api.getData();
+      _this.makeFeeds();
+    }
+    return _this;
   }
-  return commentString.join('');
-}
+  _createClass(NewsFeedView, [{
+    key: "render",
+    value: function render() {
+      for (var i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
+        var _this$feeds$i = this.feeds[i],
+          id = _this$feeds$i.id,
+          title = _this$feeds$i.title,
+          comments_count = _this$feeds$i.comments_count,
+          user = _this$feeds$i.user,
+          points = _this$feeds$i.points,
+          time_ago = _this$feeds$i.time_ago,
+          read = _this$feeds$i.read;
+        this.addHtml("\n            <div class=\"p-6 ".concat(read ? 'bg-red-200' : 'bg-white', " mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100\">\n                <div class=\"flex\">\n                    <div class=\"flex-auto\">\n                        <a href=\"#/show/").concat(id, "\">\n                            ").concat(title, "\n                        </a>\n                    </div>\n                    <div class=\"text-center text-sm\">\n                        <div class=\"w-10 text-white bg-green-300 rounded-lg px-0 py-2\">\n                            (").concat(comments_count, ")\n                        </div> \n                    </div>\n                </div>\n                <div class=\"flex mt-3\">\n                    <div class=\"grid grid-cols-3 text-sm text-gray-500\">\n                        <div>\n                            <i class=\"fas fa-user mr-1\"></i>").concat(user, "\n                        </div>\n                        <div>\n                            <i class=\"fas fa-heart mr-1\"></i>").concat(points, "\n                        </div>\n                        <div>\n                            <i class=\"fas fa-clock mr-1\"></i>").concat(time_ago, "\n                        </div>\n                    </div>\n                </div>\n            </div>\n        "));
+      }
+      this.setTemplateData('news_feed', this.getHtml());
+      this.setTemplateData('prev_page', String(store.currentPage > 1 ? store.currentPage - 1 : 1));
+      this.setTemplateData('next_page', String(store.currentPage + 1));
+      updateView(template);
+    }
+  }, {
+    key: "makeFeeds",
+    value: function makeFeeds() {
+      for (var i = 0; i < this.feeds.length; i++) {
+        this.feeds[i].read = false;
+      }
+    }
+  }]);
+  return NewsFeedView;
+}(View);
+var NewsDetailView = /*#__PURE__*/function (_View2) {
+  _inherits(NewsDetailView, _View2);
+  var _super2 = _createSuper(NewsDetailView);
+  function NewsDetailView(containerId) {
+    _classCallCheck(this, NewsDetailView);
+    var template = "\n            <div class=\"bg-gray-600 min-h-screen pb-8\">\n                <div class=\"bg-white text-xl\">\n                    <div class=\"mx-auto px-4\">\n                        <div class=\"flex justify-between items-center py-6\">\n                            <div class=\"flex justify-start\">\n                                <h1 class=\"font-extrabold\">\n                                    HACKER NEWS\n                                </h1>\n                            </div>\n                            <div class=\"items-center justify-end\">\n                                <a href=\"#/page/{{__currentPage__}}\" class=\"text-gray-500\">\n                                    <i class=\"fa fa-times\"></i>\n                                </a>\n                            </div>\n                        </div>\n                    </div>\n                </div>\n                <div class=\"h-full border rounded-xl bg-white m-6 p-4\">\n                    <h2>\n                        {{__title__}}\n                    </h2>\n                    <div class=\"text-gray-400 h-20\">\n                        {{__content__}}\n                    </div>\n                    {{__comments__}}\n                </div>\n            </div>\n        ";
+    return _super2.call(this, containerId, template);
+  }
+  _createClass(NewsDetailView, [{
+    key: "render",
+    value: function render() {
+      var id = location.hash.substring(7); // 내가 쓰고 싶은 위치 값을 지정해주면 된다. 그 이후의 나머지 문자열들만 반환한다.
+      var api = new NewsDetailApi(CONTENT_URL.replace('@id', id));
+      var newsDetail = api.getData();
+      for (var i = 0; i < store.feeds.length; i++) {
+        if (store.feeds[i].id === Number(id)) {
+          store.feeds[i].read = true;
+          break;
+        }
+      }
+      this.setTemplateData('comments', this.makeComment(newsDetail.comments));
+      this.setTemplateData('currentPage', String(store.currentPage));
+      this.setTemplateData('title', newsDetail.title);
+      this.setTemplateData('content', newsDetail.content);
+      this.updateView();
+    }
+  }, {
+    key: "makeComment",
+    value: function makeComment(comments) {
+      for (var i = 0; i < comments.length; i++) {
+        var comment = comments[i];
+        this.addHtml("\n                <div style=\"padding-left: ".concat(comment.level * 40, "px\" class=\"mt-4\">\n                    <div class=\"text-gray-400\">\n                        <i class=\"fa fa-sort-up mr-2\"></i>\n                        <strong>").concat(comment.user, "</strong> ").concat(comment.time_ago, "\n                    </div>\n                    <p class=\"text-gray-700\">\n                        ").concat(comment.content, "\n                    </p>\n                </div>\n            "));
+        // 재귀 호출
+        if (comment.comments.length > 0) {
+          this.addHtml(this.makeComment(comment.comments));
+        }
+      }
+      return this.getHtml();
+    }
+  }]);
+  return NewsDetailView;
+}(View);
 function router() {
   var routePath = location.hash;
   // location.hash가 #만 있을 경우에는 빈 값을 반환한다.
