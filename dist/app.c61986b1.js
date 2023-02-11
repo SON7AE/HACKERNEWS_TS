@@ -142,6 +142,13 @@ function makeFeeds(feeds) {
   }
   return feeds;
 }
+function updateView(html) {
+  if (CONTAINER !== null) {
+    CONTAINER.innerHTML = html;
+  } else {
+    console.error('최상위 컨테이너가 없어 UI를 진행하지 못했습니다.');
+  }
+}
 function newsFeed() {
   // 메인 페이지
   var newsFeed = store.feeds;
@@ -156,7 +163,7 @@ function newsFeed() {
   template = template.replace('{{__news_feed__}}', NEWSLIST.join(''));
   template = template.replace('{{__prev_page__}}', store.currentPage > 1 ? store.currentPage - 1 : 1);
   template = template.replace('{{__next_page__}}', store.currentPage + 1);
-  CONTAINER.innerHTML = template;
+  updateView(template);
 }
 function newsDetail() {
   var id = location.hash.substring(7); // 내가 쓰고 싶은 위치 값을 지정해주면 된다. 그 이후의 나머지 문자열들만 반환한다.
@@ -180,7 +187,7 @@ function newsDetail() {
     }
     return commentString.join('');
   }
-  CONTAINER.innerHTML = template.replace('{{__comments__}}', makeComment(NEWSCONTENT.comments));
+  updateView(template.replace('{{__comments__}}', makeComment(NEWSCONTENT.comments)));
 }
 function router() {
   var routePath = location.hash;
