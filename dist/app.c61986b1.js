@@ -120,12 +120,10 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 })({"app.ts":[function(require,module,exports) {
 "use strict";
 
+// ----------------------------------------------------------------------------------------------------
 var AJAX = new XMLHttpRequest();
 var CONTAINER = document.getElementById('root');
-var CONTENT = document.createElement('div');
 var NEWS_URL = 'https://api.hnpwa.com/v0/news/1.json';
-// 실제 사용자가 타이틀을 클릭했을 때, CONTENTS_URL을 가지고 AJAX 호출을 하여 데이터를 가져오자.
-// 이벤트 시스템은 브라우저가 제공한다.
 var CONTENT_URL = 'https://api.hnpwa.com/v0/item/@id.json';
 var store = {
   currentPage: 1,
@@ -154,6 +152,7 @@ function newsFeed() {
   var newsFeed = store.feeds;
   var NEWSLIST = [];
   var template = "\n        <div class=\"bg-gray-600 min-h-screen\">\n            <div class=\"bg-white text-xl\">\n                <div class=\"mx-auto px-4\">\n                    <div class=\"flex justify-between items-center py-6\">\n                        <div class=\"flex justify-start\"> \n                            <h1 class=\"font-extrabold\">HACKER NEWS</h1>\n                        </div>\n                        <div class=\"items-center justify-end\">\n                            <a href=\"#/page/{{__prev_page__}}\" class=\"text-gray-500\">\n                                Previous\n                            </a>\n                            <a href=\"#/page/{{__next_page__}}\" class=\"text-gray-500 ml-4\">\n                                Next\n                            </a>\n                        </div>    \n                    </div>\n                </div>\n            </div>            \n            <div class=\"p-4 text-2xl text-gray-700\">\n                {{__news_feed__}}\n            </div>\n        </div>\n    ";
+  // getData의 리턴 값이 2개이므로 제네릭을 사용하자.
   if (newsFeed.length === 0) {
     newsFeed = store.feeds = makeFeeds(getData(NEWS_URL));
   }
@@ -161,8 +160,8 @@ function newsFeed() {
     NEWSLIST.push("\n            <div class=\"p-6 ".concat(newsFeed[i].read ? 'bg-red-200' : 'bg-white', " mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100\">\n                <div class=\"flex\">\n                    <div class=\"flex-auto\">\n                        <a href=\"#/show/").concat(newsFeed[i].id, "\">\n                            ").concat(newsFeed[i].title, "\n                        </a>\n                    </div>\n                    <div class=\"text-center text-sm\">\n                        <div class=\"w-10 text-white bg-green-300 rounded-lg px-0 py-2\">\n                            (").concat(newsFeed[i].comments_count, ")\n                        </div>\n                    </div>\n                </div>\n                <div class=\"flex mt-3\">\n                    <div class=\"grid grid-cols-3 text-sm text-gray-500\">\n                        <div>\n                            <i class=\"fas fa-user mr-1\"></i>").concat(newsFeed[i].user, "\n                        </div>\n                        <div>\n                            <i class=\"fas fa-heart mr-1\"></i>").concat(newsFeed[i].points, "\n                        </div>    \n                        <div>\n                            <i class=\"fas fa-clock mr-1\"></i>").concat(newsFeed[i].time_ago, "\n                        </div>        \n                    </div>\n                </div>\n            </div>\n        "));
   }
   template = template.replace('{{__news_feed__}}', NEWSLIST.join(''));
-  template = template.replace('{{__prev_page__}}', store.currentPage > 1 ? store.currentPage - 1 : 1);
-  template = template.replace('{{__next_page__}}', store.currentPage + 1);
+  template = template.replace('{{__prev_page__}}', String(store.currentPage > 1 ? store.currentPage - 1 : 1));
+  template = template.replace('{{__next_page__}}', String(store.currentPage + 1));
   updateView(template);
 }
 function newsDetail() {
@@ -175,19 +174,19 @@ function newsDetail() {
       break;
     }
   }
-  function makeComment(comments) {
-    var called = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-    var commentString = [];
-    for (var _i = 0; _i < comments.length; _i++) {
-      commentString.push("\n                <div style=\"padding-left: ".concat(called * 40, "px\" class=\"mt-4\">\n                    <div class=\"text-gray-400\">\n                        <i class=\"fa fa-sort-up mr-2\"></i>\n                        <strong>").concat(comments[_i].user, "</strong> ").concat(comments[_i].time_ago, "\n                    </div>\n                    <p class=\"text-gray-700\">\n                        ").concat(comments[_i].content, "\n                    </p>\n                </div>\n            "));
-      // 재귀 호출
-      if (comments[_i].comments.length > 0) {
-        commentString.push(makeComment(comments[_i].comments, called + 1));
-      }
-    }
-    return commentString.join('');
-  }
   updateView(template.replace('{{__comments__}}', makeComment(NEWSCONTENT.comments)));
+}
+function makeComment(comments) {
+  var commentString = [];
+  for (var i = 0; i < comments.length; i++) {
+    var comment = comments[i];
+    commentString.push("\n            <div style=\"padding-left: ".concat(comment.level * 40, "px\" class=\"mt-4\">\n                <div class=\"text-gray-400\">\n                    <i class=\"fa fa-sort-up mr-2\"></i>\n                    <strong>").concat(comment.user, "</strong> ").concat(comment.time_ago, "\n                </div>\n                <p class=\"text-gray-700\">\n                    ").concat(comment.content, "\n                </p>\n            </div>\n        "));
+    // 재귀 호출
+    if (comment.comments.length > 0) {
+      commentString.push(makeComment(comment.comments));
+    }
+  }
+  return commentString.join('');
 }
 function router() {
   var routePath = location.hash;

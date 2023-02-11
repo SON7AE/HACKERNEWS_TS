@@ -70,7 +70,7 @@ function newsFeed(): void {
             <div class="bg-white text-xl">
                 <div class="mx-auto px-4">
                     <div class="flex justify-between items-center py-6">
-                        <div class="flex justify-start"> 
+                        <div class="flex justify-start">
                             <h1 class="font-extrabold">HACKER NEWS</h1>
                         </div>
                         <div class="items-center justify-end">
@@ -80,10 +80,10 @@ function newsFeed(): void {
                             <a href="#/page/{{__next_page__}}" class="text-gray-500 ml-4">
                                 Next
                             </a>
-                        </div>    
+                        </div>
                     </div>
                 </div>
-            </div>            
+            </div>
             <div class="p-4 text-2xl text-gray-700">
                 {{__news_feed__}}
             </div>
@@ -118,10 +118,10 @@ function newsFeed(): void {
                         </div>
                         <div>
                             <i class="fas fa-heart mr-1"></i>${newsFeed[i].points}
-                        </div>    
+                        </div>
                         <div>
                             <i class="fas fa-clock mr-1"></i>${newsFeed[i].time_ago}
-                        </div>        
+                        </div>
                     </div>
                 </div>
             </div>
