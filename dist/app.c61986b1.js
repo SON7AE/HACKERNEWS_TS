@@ -121,6 +121,12 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 "use strict";
 
 // ----------------------------------------------------------------------------------------------------
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 var AJAX = new XMLHttpRequest();
 var CONTAINER = document.getElementById('root');
 var NEWS_URL = 'https://api.hnpwa.com/v0/news/1.json';
@@ -129,11 +135,59 @@ var store = {
   currentPage: 1,
   feeds: []
 };
-function getData(url) {
-  AJAX.open('GET', url, false); // false : 동기적으로 처리하겠다는 옵션
-  AJAX.send();
-  return JSON.parse(AJAX.response);
+// ----------------------------------------------------------------------------------------------------
+function applyApiMixins(targetClass, baseClass) {
+  baseClass.forEach(function (baseClass) {
+    Object.getOwnPropertyNames(baseClass.prototype).forEach(function (name) {
+      var descriptor = Object.getOwnPropertyDescriptor(baseClass.prototype, name);
+      if (descriptor) {
+        Object.defineProperty(targetClass.prototype, name, descriptor);
+      }
+    });
+  });
 }
+var Api = /*#__PURE__*/function () {
+  function Api() {
+    _classCallCheck(this, Api);
+  }
+  _createClass(Api, [{
+    key: "getRequest",
+    value: function getRequest(url) {
+      var ajax = new XMLHttpRequest();
+      ajax.open('GET', url, false);
+      ajax.send();
+      return JSON.parse(ajax.response);
+    }
+  }]);
+  return Api;
+}();
+var NewsFeedApi = /*#__PURE__*/function () {
+  function NewsFeedApi() {
+    _classCallCheck(this, NewsFeedApi);
+  }
+  _createClass(NewsFeedApi, [{
+    key: "getData",
+    value: function getData() {
+      return this.getRequest(NEWS_URL);
+    }
+  }]);
+  return NewsFeedApi;
+}();
+var NewsDetailApi = /*#__PURE__*/function () {
+  function NewsDetailApi() {
+    _classCallCheck(this, NewsDetailApi);
+  }
+  _createClass(NewsDetailApi, [{
+    key: "getData",
+    value: function getData(id) {
+      return this.getRequest(CONTENT_URL.replace('@id', id));
+    }
+  }]);
+  return NewsDetailApi;
+}();
+applyApiMixins(NewsFeedApi, [Api]);
+applyApiMixins(NewsDetailApi, [Api]);
+// ----------------------------------------------------------------------------------------------------
 function makeFeeds(feeds) {
   for (var i = 0; i < feeds.length; i++) {
     feeds[i].read = false;
@@ -149,12 +203,13 @@ function updateView(html) {
 }
 function newsFeed() {
   // 메인 페이지
+  var api = new NewsFeedApi();
   var newsFeed = store.feeds;
   var NEWSLIST = [];
   var template = "\n        <div class=\"bg-gray-600 min-h-screen\">\n            <div class=\"bg-white text-xl\">\n                <div class=\"mx-auto px-4\">\n                    <div class=\"flex justify-between items-center py-6\">\n                        <div class=\"flex justify-start\"> \n                            <h1 class=\"font-extrabold\">HACKER NEWS</h1>\n                        </div>\n                        <div class=\"items-center justify-end\">\n                            <a href=\"#/page/{{__prev_page__}}\" class=\"text-gray-500\">\n                                Previous\n                            </a>\n                            <a href=\"#/page/{{__next_page__}}\" class=\"text-gray-500 ml-4\">\n                                Next\n                            </a>\n                        </div>    \n                    </div>\n                </div>\n            </div>            \n            <div class=\"p-4 text-2xl text-gray-700\">\n                {{__news_feed__}}\n            </div>\n        </div>\n    ";
   // getData의 리턴 값이 2개이므로 제네릭을 사용하자.
   if (newsFeed.length === 0) {
-    newsFeed = store.feeds = makeFeeds(getData(NEWS_URL));
+    newsFeed = store.feeds = makeFeeds(api.getData());
   }
   for (var i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
     NEWSLIST.push("\n            <div class=\"p-6 ".concat(newsFeed[i].read ? 'bg-red-200' : 'bg-white', " mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100\">\n                <div class=\"flex\">\n                    <div class=\"flex-auto\">\n                        <a href=\"#/show/").concat(newsFeed[i].id, "\">\n                            ").concat(newsFeed[i].title, "\n                        </a>\n                    </div>\n                    <div class=\"text-center text-sm\">\n                        <div class=\"w-10 text-white bg-green-300 rounded-lg px-0 py-2\">\n                            (").concat(newsFeed[i].comments_count, ")\n                        </div>\n                    </div>\n                </div>\n                <div class=\"flex mt-3\">\n                    <div class=\"grid grid-cols-3 text-sm text-gray-500\">\n                        <div>\n                            <i class=\"fas fa-user mr-1\"></i>").concat(newsFeed[i].user, "\n                        </div>\n                        <div>\n                            <i class=\"fas fa-heart mr-1\"></i>").concat(newsFeed[i].points, "\n                        </div>    \n                        <div>\n                            <i class=\"fas fa-clock mr-1\"></i>").concat(newsFeed[i].time_ago, "\n                        </div>        \n                    </div>\n                </div>\n            </div>\n        "));
@@ -166,7 +221,8 @@ function newsFeed() {
 }
 function newsDetail() {
   var id = location.hash.substring(7); // 내가 쓰고 싶은 위치 값을 지정해주면 된다. 그 이후의 나머지 문자열들만 반환한다.
-  var NEWSCONTENT = getData(CONTENT_URL.replace('@id', id));
+  var api = new NewsDetailApi();
+  var NEWSCONTENT = api.getData(id);
   var template = "\n        <div class=\"bg-gray-600 min-h-screen pb-8\">\n            <div class=\"bg-white text-xl\">\n                <div class=\"mx-auto px-4\">\n                    <div class=\"flex justify-between items-center py-6\">\n                        <div class=\"flex justify-start\">\n                            <h1 class=\"font-extrabold\">\n                                HACKER NEWS\n                            </h1>\n                        </div>\n                        <div class=\"items-center justify-end\">\n                            <a href=\"#/page/".concat(store.currentPage, "\" class=\"text-gray-500\">\n                                <i class=\"fa fa-times\"></i>\n                            </a>\n                        </div>\n                    </div>\n                </div>\n            </div>\n            <div class=\"h-full border rounded-xl bg-white m-6 p-4\">\n                <h2>\n                    ").concat(NEWSCONTENT.title, "\n                </h2>\n                <div class=\"text-gray-400 h-20\">\n                    ").concat(NEWSCONTENT.content, "\n                </div>\n                {{__comments__}}\n            </div>\n        </div>\n    ");
   for (var i = 0; i < store.feeds.length; i++) {
     if (store.feeds[i].id === Number(id)) {
@@ -228,7 +284,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63500" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65355" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
