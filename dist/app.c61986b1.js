@@ -121,6 +121,9 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 "use strict";
 
 // ----------------------------------------------------------------------------------------------------
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
@@ -204,12 +207,14 @@ var View = /*#__PURE__*/function () {
     }
     this.container = containerElement;
     this.template = template;
+    this.renderTemplate = template;
     this.htmlList = [];
   }
   _createClass(View, [{
     key: "updateView",
     value: function updateView() {
-      this.container.innerHTML = this.template;
+      this.container.innerHTML = this.renderTemplate;
+      this.renderTemplate = this.template;
     }
   }, {
     key: "addHtml",
@@ -219,12 +224,19 @@ var View = /*#__PURE__*/function () {
   }, {
     key: "getHtml",
     value: function getHtml() {
-      return this.htmlList.join('');
+      var snapshot = this.htmlList.join('');
+      this.clearHtmlList();
+      return snapshot;
     }
   }, {
     key: "setTemplateData",
     value: function setTemplateData(key, value) {
-      this.template = this.template.replace("{{__".concat(key, "__}}"), value);
+      this.renderTemplate = this.renderTemplate.replace("{{__".concat(key, "__}}"), value);
+    }
+  }, {
+    key: "clearHtmlList",
+    value: function clearHtmlList() {
+      this.htmlList = [];
     }
   }]);
   return View;
@@ -249,6 +261,7 @@ var NewsFeedView = /*#__PURE__*/function (_View) {
   _createClass(NewsFeedView, [{
     key: "render",
     value: function render() {
+      store.currentPage = Number(location.hash.substring(7) || 1);
       for (var i = (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
         var _this$feeds$i = this.feeds[i],
           id = _this$feeds$i.id,
@@ -263,7 +276,7 @@ var NewsFeedView = /*#__PURE__*/function (_View) {
       this.setTemplateData('news_feed', this.getHtml());
       this.setTemplateData('prev_page', String(store.currentPage > 1 ? store.currentPage - 1 : 1));
       this.setTemplateData('next_page', String(store.currentPage + 1));
-      updateView(template);
+      this.updateView();
     }
   }, {
     key: "makeFeeds",
@@ -275,6 +288,55 @@ var NewsFeedView = /*#__PURE__*/function (_View) {
   }]);
   return NewsFeedView;
 }(View);
+var Router = /*#__PURE__*/function () {
+  function Router() {
+    _classCallCheck(this, Router);
+    window.addEventListener('hashchange', this.route.bind(this));
+    this.routeTable = [];
+    this.defaultRoute = null;
+  }
+  _createClass(Router, [{
+    key: "setDefaultPage",
+    value: function setDefaultPage(page) {
+      this.defaultRoute = {
+        path: '',
+        page: page
+      };
+    }
+  }, {
+    key: "addRouterPath",
+    value: function addRouterPath(path, page) {
+      this.routeTable.push({
+        path: path,
+        page: page
+      });
+    }
+  }, {
+    key: "route",
+    value: function route() {
+      var routePath = location.hash;
+      if (routePath === '' && this.defaultRoute) {
+        this.defaultRoute.page.render();
+      }
+      var _iterator = _createForOfIteratorHelper(this.routeTable),
+        _step;
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var RouterInfo = _step.value;
+          if (routePath.indexOf(RouterInfo.path) >= 0) {
+            RouterInfo.page.render();
+            break;
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+    }
+  }]);
+  return Router;
+}();
 var NewsDetailView = /*#__PURE__*/function (_View2) {
   _inherits(NewsDetailView, _View2);
   var _super2 = _createSuper(NewsDetailView);
@@ -317,21 +379,13 @@ var NewsDetailView = /*#__PURE__*/function (_View2) {
   }]);
   return NewsDetailView;
 }(View);
-function router() {
-  var routePath = location.hash;
-  // location.hash가 #만 있을 경우에는 빈 값을 반환한다.
-  // 따라서 true를 반환한다.
-  if (routePath === '') {
-    newsFeed();
-  } else if (routePath.indexOf('#/page/') >= 0) {
-    store.currentPage = Number(routePath.substring(7));
-    newsFeed();
-  } else {
-    newsDetail();
-  }
-}
-window.addEventListener('hashchange', router);
-router();
+var router = new Router();
+var newsFeedView = new NewsFeedView('root');
+var newsDetailView = new NewsDetailView('root');
+router.setDefaultPage(newsFeedView);
+router.addRouterPath('/page/', newsFeedView);
+router.addRouterPath('/show/', newsDetailView);
+router.route();
 },{}],"../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -357,7 +411,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65355" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49471" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

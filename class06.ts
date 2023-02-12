@@ -182,7 +182,7 @@ class NewsFeedView extends View {
                     <div class="text-center text-sm">
                         <div class="w-10 text-white bg-green-300 rounded-lg px-0 py-2">
                             (${comments_count})
-                        </div> 
+                        </div>
                     </div>
                 </div>
                 <div class="flex mt-3">
