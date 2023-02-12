@@ -1,18 +1,6 @@
 import { NewsFeed, NewsDetail } from '../types'
 import { NEWS_URL, CONTENT_URL } from '../config'
 
-// function applyApiMixins(targetClass: any, baseClass: any[]): void {
-//     baseClass.forEach((baseClass) => {
-//         Object.getOwnPropertyNames(baseClass.prototype).forEach((name) => {
-//             const descriptor = Object.getOwnPropertyDescriptor(baseClass.prototype, name)
-
-//             if (descriptor) {
-//                 Object.defineProperty(targetClass.prototype, name, descriptor)
-//             }
-//         })
-//     })
-// }
-
 export class Api {
     ajax: XMLHttpRequest
     url: string
@@ -39,6 +27,3 @@ export class NewsDetailApi extends Api {
         return this.getRequest<NewsDetail>(CONTENT_URL.replace('@id', id))
     }
 }
-
-// applyApiMixins(NewsFeedApi, [Api])
-// applyApiMixins(NewsDetailApi, [Api])

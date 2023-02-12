@@ -1,6 +1,6 @@
 import View from '../core/view'
 import { NewsDetailApi } from '../core/api'
-import { NewsDetail, NewsComment } from '../types'
+import { NewsDetail, NewsComment, NewsStore } from '../types'
 import { CONTENT_URL } from '../config'
 
 const template = `
@@ -34,24 +34,23 @@ const template = `
 `
 
 export default class NewsDetailView extends View {
-    constructor(containerId: string) {
-        super(containerId, template)
-    }
-    render() {
-        const id = location.hash.substring(7) // 내가 쓰고 싶은 위치 값을 지정해주면 된다. 그 이후의 나머지 문자열들만 반환한다.
-        const api = new NewsDetailApi(CONTENT_URL.replace('@id', id))
-        const newsDetail: NewsDetail = api.getData()
+    private store: NewsStore
 
-        for (let i = 0; i < window.store.feeds.length; i++) {
-            if (window.store.feeds[i].id === Number(id)) {
-                window.store.feeds[i].read = true
-                break
-            }
-        }
-        this.setTemplateData('comments', this.makeComment(newsDetail.comments))
-        this.setTemplateData('currentPage', String(window.store.currentPage))
-        this.setTemplateData('title', newsDetail.title)
-        this.setTemplateData('content', newsDetail.content)
+    constructor(containerId: string, store: NewsStore) {
+        super(containerId, template)
+
+        this.store = store
+    }
+
+    render = (id: string): void => {
+        const api = new NewsDetailApi(CONTENT_URL.replace('@id', id))
+        const { title, content, comments } = api.getData()
+
+        this.store.makeRead(Number(id))
+        this.setTemplateData('currentPage', this.store.currentPage.toString())
+        this.setTemplateData('title', title)
+        this.setTemplateData('content', content)
+        this.setTemplateData('comments', this.makeComment(comments))
 
         this.updateView()
     }

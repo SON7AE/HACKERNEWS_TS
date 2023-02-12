@@ -268,16 +268,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.NewsDetailApi = exports.NewsFeedApi = exports.Api = void 0;
 var config_1 = require("../config");
-// function applyApiMixins(targetClass: any, baseClass: any[]): void {
-//     baseClass.forEach((baseClass) => {
-//         Object.getOwnPropertyNames(baseClass.prototype).forEach((name) => {
-//             const descriptor = Object.getOwnPropertyDescriptor(baseClass.prototype, name)
-//             if (descriptor) {
-//                 Object.defineProperty(targetClass.prototype, name, descriptor)
-//             }
-//         })
-//     })
-// }
 var Api = /*#__PURE__*/function () {
   function Api(url) {
     _classCallCheck(this, Api);
@@ -327,8 +317,6 @@ var NewsDetailApi = /*#__PURE__*/function (_Api2) {
   return NewsDetailApi;
 }(Api);
 exports.NewsDetailApi = NewsDetailApi;
-// applyApiMixins(NewsFeedApi, [Api])
-// applyApiMixins(NewsDetailApi, [Api])
 },{"../config":"src/config.ts"}],"src/page/news-detail-view.ts":[function(require,module,exports) {
 "use strict";
 
@@ -360,29 +348,27 @@ var template = "\n<div class=\"bg-gray-600 min-h-screen pb-8\">\n    <div class=
 var NewsDetailView = /*#__PURE__*/function (_view_1$default) {
   _inherits(NewsDetailView, _view_1$default);
   var _super = _createSuper(NewsDetailView);
-  function NewsDetailView(containerId) {
+  function NewsDetailView(containerId, store) {
+    var _this;
     _classCallCheck(this, NewsDetailView);
-    return _super.call(this, containerId, template);
+    _this = _super.call(this, containerId, template);
+    _this.render = function (id) {
+      var api = new api_1.NewsDetailApi(config_1.CONTENT_URL.replace('@id', id));
+      var _api$getData = api.getData(),
+        title = _api$getData.title,
+        content = _api$getData.content,
+        comments = _api$getData.comments;
+      _this.store.makeRead(Number(id));
+      _this.setTemplateData('currentPage', _this.store.currentPage.toString());
+      _this.setTemplateData('title', title);
+      _this.setTemplateData('content', content);
+      _this.setTemplateData('comments', _this.makeComment(comments));
+      _this.updateView();
+    };
+    _this.store = store;
+    return _this;
   }
   _createClass(NewsDetailView, [{
-    key: "render",
-    value: function render() {
-      var id = location.hash.substring(7); // 내가 쓰고 싶은 위치 값을 지정해주면 된다. 그 이후의 나머지 문자열들만 반환한다.
-      var api = new api_1.NewsDetailApi(config_1.CONTENT_URL.replace('@id', id));
-      var newsDetail = api.getData();
-      for (var i = 0; i < window.store.feeds.length; i++) {
-        if (window.store.feeds[i].id === Number(id)) {
-          window.store.feeds[i].read = true;
-          break;
-        }
-      }
-      this.setTemplateData('comments', this.makeComment(newsDetail.comments));
-      this.setTemplateData('currentPage', String(window.store.currentPage));
-      this.setTemplateData('title', newsDetail.title);
-      this.setTemplateData('content', newsDetail.content);
-      this.updateView();
-    }
-  }, {
     key: "makeComment",
     value: function makeComment(comments) {
       for (var i = 0; i < comments.length; i++) {
@@ -403,11 +389,11 @@ exports.default = NewsDetailView;
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
@@ -430,48 +416,38 @@ var template = "\n<div class=\"bg-gray-600 min-h-screen\">\n    <div class=\"bg-
 var NewsFeedView = /*#__PURE__*/function (_view_1$default) {
   _inherits(NewsFeedView, _view_1$default);
   var _super = _createSuper(NewsFeedView);
-  function NewsFeedView(containerId) {
+  function NewsFeedView(containerId, store) {
     var _this;
     _classCallCheck(this, NewsFeedView);
     // 메인 페이지
     _this = _super.call(this, containerId, template);
+    _this.render = function () {
+      var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '1';
+      _this.store.currentPage = Number(page);
+      for (var i = (_this.store.currentPage - 1) * 10; i < _this.store.currentPage * 10; i++) {
+        var _this$store$getFeed = _this.store.getFeed(i),
+          id = _this$store$getFeed.id,
+          title = _this$store$getFeed.title,
+          comments_count = _this$store$getFeed.comments_count,
+          user = _this$store$getFeed.user,
+          points = _this$store$getFeed.points,
+          time_ago = _this$store$getFeed.time_ago,
+          read = _this$store$getFeed.read;
+        _this.addHtml("\n            <div class=\"p-6 ".concat(read ? 'bg-red-200' : 'bg-white', " mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100\">\n                <div class=\"flex\">\n                    <div class=\"flex-auto\">\n                        <a href=\"#/show/").concat(id, "\">\n                            ").concat(title, "\n                        </a>\n                    </div>\n                    <div class=\"text-center text-sm\">\n                        <div class=\"w-10 text-white bg-green-300 rounded-lg px-0 py-2\">\n                            (").concat(comments_count, ")\n                        </div> \n                    </div>\n                </div>\n                <div class=\"flex mt-3\">\n                    <div class=\"grid grid-cols-3 text-sm text-gray-500\">\n                        <div>\n                            <i class=\"fas fa-user mr-1\"></i>").concat(user, "\n                        </div>\n                        <div>\n                            <i class=\"fas fa-heart mr-1\"></i>").concat(points, "\n                        </div>\n                        <div>\n                            <i class=\"fas fa-clock mr-1\"></i>").concat(time_ago, "\n                        </div>\n                    </div>\n                </div>\n            </div>\n        "));
+      }
+      _this.setTemplateData('news_feed', _this.getHtml());
+      _this.setTemplateData('prev_page', String(_this.store.prevPage));
+      _this.setTemplateData('next_page', String(_this.store.nextPage));
+      _this.updateView();
+    };
+    _this.store = store;
     _this.api = new api_1.NewsFeedApi(config_1.NEWS_URL);
-    _this.feeds = window.store.feeds;
-    if (_this.feeds.length === 0) {
-      _this.feeds = window.store.feeds = _this.api.getData();
-      _this.makeFeeds();
+    if (!_this.store.hasFeeds) {
+      _this.store.setFeeds(_this.api.getData());
     }
     return _this;
   }
-  _createClass(NewsFeedView, [{
-    key: "render",
-    value: function render() {
-      window.store.currentPage = Number(location.hash.substring(7) || 1);
-      for (var i = (window.store.currentPage - 1) * 10; i < window.store.currentPage * 10; i++) {
-        var _this$feeds$i = this.feeds[i],
-          id = _this$feeds$i.id,
-          title = _this$feeds$i.title,
-          comments_count = _this$feeds$i.comments_count,
-          user = _this$feeds$i.user,
-          points = _this$feeds$i.points,
-          time_ago = _this$feeds$i.time_ago,
-          read = _this$feeds$i.read;
-        this.addHtml("\n            <div class=\"p-6 ".concat(read ? 'bg-red-200' : 'bg-white', " mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100\">\n                <div class=\"flex\">\n                    <div class=\"flex-auto\">\n                        <a href=\"#/show/").concat(id, "\">\n                            ").concat(title, "\n                        </a>\n                    </div>\n                    <div class=\"text-center text-sm\">\n                        <div class=\"w-10 text-white bg-green-300 rounded-lg px-0 py-2\">\n                            (").concat(comments_count, ")\n                        </div> \n                    </div>\n                </div>\n                <div class=\"flex mt-3\">\n                    <div class=\"grid grid-cols-3 text-sm text-gray-500\">\n                        <div>\n                            <i class=\"fas fa-user mr-1\"></i>").concat(user, "\n                        </div>\n                        <div>\n                            <i class=\"fas fa-heart mr-1\"></i>").concat(points, "\n                        </div>\n                        <div>\n                            <i class=\"fas fa-clock mr-1\"></i>").concat(time_ago, "\n                        </div>\n                    </div>\n                </div>\n            </div>\n        "));
-      }
-      this.setTemplateData('news_feed', this.getHtml());
-      this.setTemplateData('prev_page', String(window.store.currentPage > 1 ? window.store.currentPage - 1 : 1));
-      this.setTemplateData('next_page', String(window.store.currentPage + 1));
-      this.updateView();
-    }
-  }, {
-    key: "makeFeeds",
-    value: function makeFeeds() {
-      for (var i = 0; i < this.feeds.length; i++) {
-        this.feeds[i].read = false;
-      }
-    }
-  }]);
-  return NewsFeedView;
+  return _createClass(NewsFeedView);
 }(view_1.default);
 exports.default = NewsFeedView;
 },{"../core/view":"src/core/view.ts","../core/api":"src/core/api.ts","../config":"src/config.ts"}],"src/page/index.ts":[function(require,module,exports) {
@@ -500,7 +476,86 @@ Object.defineProperty(exports, "NewsFeedView", {
     return __importDefault(news_feed_view_1).default;
   }
 });
-},{"./news-detail-view":"src/page/news-detail-view.ts","./news-feed-view":"src/page/news-feed-view.ts"}],"src/app.ts":[function(require,module,exports) {
+},{"./news-detail-view":"src/page/news-detail-view.ts","./news-feed-view":"src/page/news-feed-view.ts"}],"src/store.ts":[function(require,module,exports) {
+"use strict";
+
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var Store = /*#__PURE__*/function () {
+  function Store() {
+    _classCallCheck(this, Store);
+    this.feeds = [];
+    this._currentPage = 1;
+  }
+  _createClass(Store, [{
+    key: "currentPage",
+    get: function get() {
+      return this._currentPage;
+    }
+  }, {
+    key: "currentPate",
+    set: function set(page) {
+      this._currentPage = page;
+    }
+  }, {
+    key: "nextPage",
+    get: function get() {
+      return this._currentPage + 1;
+    }
+  }, {
+    key: "prevPage",
+    get: function get() {
+      return this._currentPage > 1 ? this._currentPage - 1 : 1;
+    }
+  }, {
+    key: "numberOfFeed",
+    get: function get() {
+      return this.feeds.length;
+    }
+  }, {
+    key: "hasFeeds",
+    get: function get() {
+      return this.feeds.length > 0;
+    }
+  }, {
+    key: "getAllFeeds",
+    value: function getAllFeeds() {
+      return this.feeds;
+    }
+  }, {
+    key: "getFeed",
+    value: function getFeed(position) {
+      return this.feeds[position];
+    }
+  }, {
+    key: "setFeeds",
+    value: function setFeeds(feeds) {
+      this.feeds.map(function (feed) {
+        return Object.assign(Object.assign({}, feed), {
+          read: false
+        });
+      });
+    }
+  }, {
+    key: "makeRead",
+    value: function makeRead(id) {
+      var feed = this.feeds.find(function (feed) {
+        feed.id === id;
+      });
+      if (feed) feed.read = true;
+    }
+  }]);
+  return Store;
+}();
+exports.default = Store;
+},{}],"src/app.ts":[function(require,module,exports) {
 "use strict";
 
 var __importDefault = this && this.__importDefault || function (mod) {
@@ -515,19 +570,16 @@ Object.defineProperty(exports, "__esModule", {
 // const container: HTMLElement | null = document.getElementById('root')
 var router_1 = __importDefault(require("./core/router"));
 var page_1 = require("./page");
-var store = {
-  currentPage: 1,
-  feeds: []
-};
-window.store = store;
+var store_1 = __importDefault(require("./store"));
+var store = new store_1.default();
 var router = new router_1.default();
-var newsFeedView = new page_1.NewsFeedView('root');
-var newsDetailView = new page_1.NewsDetailView('root');
+var newsFeedView = new page_1.NewsFeedView('root', store);
+var newsDetailView = new page_1.NewsDetailView('root', store);
 router.setDefaultPage(newsFeedView);
-router.addRouterPath('/page/', newsFeedView);
-router.addRouterPath('/show/', newsDetailView);
-router.route();
-},{"./core/router":"src/core/router.ts","./page":"src/page/index.ts"}],"../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+router.addRouterPath('/page/', newsFeedView, /page\/(\d+)/);
+router.addRouterPath('/show/', newsDetailView, /show\/(\d+)/);
+router.go();
+},{"./core/router":"src/core/router.ts","./page":"src/page/index.ts","./store":"src/store.ts"}],"../../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -552,7 +604,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49690" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52325" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

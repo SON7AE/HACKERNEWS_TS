@@ -1,8 +1,15 @@
 import View from '../core/view'
 
-export interface Store {
+export interface NewsStore {
+    getAllFeeds: () => NewsFeed[]
+    getFeed: (position: number) => NewsFeed
+    setFeeds: (feeds: NewsFeed[]) => void
+    makeRead: (id: number) => void
+    hasFeeds: boolean
     currentPage: number
-    feeds: NewsFeed[] // NewsFeed 유형의 데이터가 들어가는 배열
+    numberOfFeed: number
+    nextPage: number
+    prevPage: number
 }
 
 // 중복 데이터 통합
