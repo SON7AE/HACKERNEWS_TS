@@ -10,20 +10,24 @@ export class Api {
         this.url = url
     }
 
-    getRequest<T>(url: string): T {
-        this.ajax.open('GET', url, false)
+    getRequest<T>(cb: (data: T) => void): void {
+        this.ajax.open('GET', this.url)
+        this.ajax.addEventListener('load', () => {
+            cb(JSON.parse(this.ajax.response) as T)
+        })
         this.ajax.send()
-
-        return JSON.parse(this.ajax.response)
     }
 }
 export class NewsFeedApi extends Api {
-    getData(): NewsFeed[] {
-        return this.getRequest<NewsFeed[]>(NEWS_URL)
+    constructor(url: string) {
+        super(url)
+    }
+    getData(cb: (data: NewsFeed[]) => void): void {
+        return this.getRequest<NewsFeed[]>(cb)
     }
 }
 export class NewsDetailApi extends Api {
-    getData(id: string): NewsDetail {
-        return this.getRequest<NewsDetail>(CONTENT_URL.replace('@id', id))
+    getData(cb: (data: NewsDetail) => void): void {
+        return this.getRequest<NewsDetail>(cb)
     }
 }
